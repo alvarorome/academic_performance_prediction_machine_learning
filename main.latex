@@ -1,0 +1,212 @@
+\documentclass{article}
+\usepackage[nonatbib,final]{neurips_2023}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{hyperref}
+
+\title{Predicción del Rendimiento Académico en Secundaria mediante Aprendizaje Automático}
+
+\author{
+  Álvaro Rodríguez Mesa\\
+  2ºIMAT B ICAI\\
+  \texttt{202304364@alu.comillas.edu}
+}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+Este informe muestra la predicción de la nota final de estudiantes de secundaria mediante modelos de aprendizaje automático. Se siguen los cinco pasos fundamentales de modelado y se presentan resultados visuales e interpretaciones para apoyar la toma de decisiones educativas.
+\end{abstract}
+
+\section{Introducción}
+
+El rendimiento académico de los estudiantes está influenciado por numerosos factores. Comprenderlos puede ser clave para mejorar la calidad educativa. Este informe muestra la predicción de la nota final de estudiantes de secundaria mediante modelos de aprendizaje automático y mediante dichas técnicas con sus respectivas estadísticas y gráficas propone soluciones y predicciones representativas para hacer cambios. En este proyecto se han seguido los 5 pasos (dedos de la mano) del primer tema de forma clara.
+
+\section{Descripción del conjunto de datos}
+
+Los datos incluyen información académica y socio-demográfica de estudiantes de dos institutos de Madrid. La variable objetivo es la nota final (T3) en Matemáticas o Lengua. Entre las variables se encuentran: sexo, edad, nivel educativo de los padres, apoyo escolar y familiar, consumo de alcohol, salud, faltas, etc. En el enunciado se encuentran dos archivos (test y otro para train y validation) con los que se trabajan dichas variables.
+
+\section{Análisis exploratorio}
+
+Previo a entrenar los modelos y sacar conclusiones se analizan y exploran los datos dados. Primeramente, en el preproceso y limpieza de datos se hace un \texttt{data.info()}, \texttt{data.describe()} y \texttt{data.isnull().sum()} para ver los tipos de datos que se manejan, sus estadísticas principales y sobre todo, si existen o no datos nulos. Además se muestra mediante un histograma como es la variable a predecir (ver figura 1).
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.6\linewidth]{media/image3.png}
+\caption{Histograma nota final (T3)}
+\end{figure}
+
+Tras esto, se analizan los posibles datos atípicos (outliers) de forma informativa y únicamente para saber la forma de los datos (análisis básico), (ver figura 2).
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.7\linewidth]{media/image4.png}
+\caption{Boxplots variables}
+\end{figure}
+
+Después, se rellenan los datos nulos con la media y se vuelven a ejecutar \texttt{data.info()}, \texttt{data.describe()} y \texttt{data.isnull().sum()} para verificar que dichos nulos han sido sustituidos correctamente. Finalmente, se transforman las variables categóricas a cuantitativas mediante one-hot-encoding y se verifica que las clases están balanceadas (se confirma con la distribución normal resultante).
+
+\section{Modelado predictivo}
+
+\subsection{Modelo (i): con T1 y T2}
+
+Para este primer modelo se han usado todas las variables y se ha empleado \texttt{RandomForest} (método robusto que emplea un conjunto de árboles). Para medir cómo de preciso y fiable es este modelo se calculan RMSE y R\^{}2. Los resultados son buenos ya que tiene un error promedio de apenas 1.36 puntos sobre 20 y explica el 88.9\% de la variabilidad del rendimiento final de los estudiantes. Para apoyar esto se muestra la curva de aprendizaje (ver figura 3) donde los errores de entrenamiento y validación tienden a parecerse:
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.6\linewidth]{media/image5.png}
+\caption{Curva de aprendizaje de modelo i}
+\end{figure}
+
+\subsection{Modelo (ii): sin T1 ni T2}
+
+Para este segundo modelo se vuelve a emplear \texttt{RandomForest} pero quitando las variables T1 y T2. En este caso se obtienen unos resultados peores: RMSE: 3.2 y R2: 0.38. Finalmente, esto se muestra con los valores tan altos de error que se aprecian en la escala del eje y de la curva de calibración (ver figura 4):
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.7\linewidth]{media/image6.png}
+\caption{Curva de aprendizaje modelo ii}
+\end{figure}
+
+Comentario adicional: Al no disponer de T1 y T2 (motivo de tanto error) se muestra con un histograma la importancia del resto de variables donde destacan suspensos y faltas (ver figura 5):
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.75\linewidth]{media/image7.png}
+\caption{Histograma de importancia de variables}
+\end{figure}
+
+En el apéndice se muestran las gráficas comparativas de ambos modelos.
+
+\section{Modelo optimizado}
+
+En este apartado se busca optimizar el modelo ii mediante validación cruzada, en este caso, \texttt{RandomizedSearch} del \texttt{GradientBoostingRegressor} ya que busca un rango de valores continuos de parámetros. Al utilizar este modelo y carecer de una función de coste no se puede hacer el descenso gradiente que buscaría el mínimo tras varias derivaciones.
+
+Parámetros optimizados:
+
+\begin{itemize}
+  \item n\_estimators: rango (100, 300),
+  \item max\_depth: rango (3, 20),
+  \item learning\_rate: rango (0.01, 0.3),
+  \item subsample: rango (0.6, 0.4),
+  \item min\_samples\_split: rango (2, 10),
+  \item min\_samples\_leaf: rango (1, 10)
+\end{itemize}
+
+Este modelo obtiene mejoras en los resultados respecto al modelo ii normal. Los resultados han sido de: RMSE: 3.02 y R2: 0.45. La curva de aprendizaje es muy similar a la anterior pero se pueden apreciar las mejoras en las gráficas comparativas ya vistas en el apéndice.
+
+Además, se vuelven a analizar las variables más importantes saliendo las mismas que antes pero en diferente orden (ver figura 6). Esta vez, se han mostrado más gráficas para verificar esta hipótesis como la matriz de correlación o violinplots (ver apéndice).
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.7\linewidth]{media/image8.png}
+\caption{Importancia variables modelo ii optimizado}
+\end{figure}
+
+\section{Interpretación de resultados}
+
+\begin{quote}
+Una vez vistas las gráficas del apéndice se pueden interpretar sus resultados y tratar de obtener unas soluciones concluyentes para aquellos estudiantes necesitados de ayuda para mejorar su rendimiento final (T3). Como soluciones se proponen:
+
+En cuanto al aspecto relacionado con las faltas, una solución que podría frenar y bajar el índice de notas bajas por número alto de faltas es poner un sistema de asistencia más duro. Se puede proponer un porcentaje de clases obligatorias a las que ir o un número mínimo de asistencia a clases para poder presentarse a la convocatoria final de la asignatura.
+
+Para el tema de los suspensos, como solución se puede proponer un sistema de apoyo típico de centros escolares en los que aquellos alumnos con asignaturas suspensas tengan clases de refuerzo o ayuda de profesores particulares adjudicados. Clases obligatorias en horario no lectivo puede incentivar a dichos alumnos a estudiar más y reducir el número de suspensos.
+\end{quote}
+
+\section{Parte creativa: aprendizaje no supervisado y explicabilidad}
+
+Para explorar más a fondo estos datos se aplican como técnicas de aprendizaje no supervisado PCA y KMeans ya que PCA es útil para reducir la dimensionalidad y obtener efectividad y simplicidad al mismo tiempo. Además, esta técnica es de gran utilidad para representar resultados en contextos académicos. También se emplea KMeans para agrupar los estudiantes en clusters con características simples y obtener patrones ocultos.
+
+Para realizar PCA se estandarizan los datos (condición indispensable) y en cuanto a KMeans se realizan tanto el método del codo como el de la silueta para obtener el número óptimo de clusters (en este caso 3). El resultado es el siguiente (ver figura 7):
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.5\linewidth]{media/image9.png}
+\caption{Clusters de estudiantes}
+\end{figure}
+
+\section{Conclusiones}
+
+Finalmente, se hacen las predicciones de T3 con un archivo dado tanto para el modelo i como para el modelo ii optimizado. Los resultados se pueden ver en el archivo csv creado. Como resumen de cierre, los modelos predictivos permiten anticipar el rendimiento escolar con buena precisión. El modelo (i) es más preciso, pero el (ii) permite intervenir desde el inicio del curso. Factores como el número de faltas y de suspensos son críticos para el desarrollo de las calificaciones finales del estudiante. El modelo optimizado y las herramientas de interpretabilidad refuerzan la utilidad del enfoque.
+
+\section{Apéndice}
+
+En esta sección del apéndice se muestran el resto de imágenes del notebook. Entre estas se muestran: gráficas comparativas modelo i y modelo ii (figuras 8, 9 y 10), gráficas comparativas modelo i, modelo ii y modelo ii optimizado (figuras 11, 12 y 13), gráficas de importancia de variables (ver figuras 14, 15 y 16) y métodos clusters kmeans (ver figuras 17 y 18).
+
+\begin{figure}
+  \centering
+  \begin{minipage}{0.32\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{media/image10.png}
+    \caption{Imagen 10}
+  \end{minipage}
+  \hfill
+  \begin{minipage}{0.32\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{media/image11.png}
+    \caption{Imagen 11}
+  \end{minipage}
+  \hfill
+  \begin{minipage}{0.32\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{media/image12.png}
+    \caption{Imagen 12}
+  \end{minipage}
+\end{figure}
+
+\begin{figure}
+  \centering
+  \begin{minipage}{0.32\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{media/image13.png}
+    \caption{Imagen 13}
+  \end{minipage}
+  \hfill
+  \begin{minipage}{0.32\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{media/image14.png}
+    \caption{Imagen 14}
+  \end{minipage}
+  \hfill
+  \begin{minipage}{0.32\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{media/image15.png}
+    \caption{Imagen 15}
+  \end{minipage}
+\end{figure}
+
+\begin{figure}
+  \centering
+  \includegraphics[width=0.7\linewidth]{media/image16.png}
+  \caption{Imagen 16}
+\end{figure}
+
+\begin{figure}
+  \centering
+  \includegraphics[width=0.7\linewidth]{media/image17.png}
+  \caption{Imagen 17}
+\end{figure}
+
+\begin{figure}
+  \centering
+  \includegraphics[width=0.7\linewidth]{media/image18.png}
+  \caption{Imagen 18}
+\end{figure}
+
+\begin{figure}
+  \centering
+  \includegraphics[width=0.7\linewidth]{media/image19.png}
+  \caption{Imagen 19}
+\end{figure}
+
+\begin{figure}
+  \centering
+  \includegraphics[width=0.7\linewidth]{media/image20.png}
+  \caption{Imagen 20}
+\end{figure}
+
+\end{document}
